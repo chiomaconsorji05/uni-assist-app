@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Uni Assist — Study Smarter, Not Harder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  if(window['pdfjsLib']){
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  }
+</script>
+<style>
+  :root{
+    --sidebar-bg:#122A1D;
+    --sidebar-bg-2:#0D2216;
+    --sidebar-line:rgba(255,255,255,.08);
+    --accent:#3C8B4A;
+    --accent-dark:#2C6B39;
+    --accent-light:#DFEFE1;
+    --gold:#E7B84E;
+    --bg:#F0F1EC;
+    --card:#FFFFFF;
+    --border:#E3E4DF;
+    --text:#181C19;
+    --text-muted:#68706A;
+    --danger:#C0392B;
+    --radius:16px;
+    --radius-sm:10px;
+    --shadow: 0 1px 2px rgba(20,30,20,.06), 0 6px 20px rgba(20,30,20,.06);
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; transition-duration:.001ms !important;}
+  }
+  h1,h2,h3,h4{margin:0; font-family:'Georgia','Times New Roman',serif; letter-spacing:-0.01em;}
+  p{margin:0;}
+  button{font-family:inherit; cursor:pointer;}
+  input,select,textarea{font-family:inherit; font-size:.95rem;}
+  a{color:inherit;}
+  ::selection{background:var(--gold); color:#1a1a1a;}
+
+  :focus-visible{
+    outline:3px solid var(--gold);
+    outline-offset:2px;
+    border-radius:6px;
+  }
+
+  /* ---------- automatic TV layout (large screens, 10-foot UI) ---------- */
+  @media (min-width:1600px){
+    body{font-size:19px;}
+    .app-frame{max-width:1760px; margin:0 auto; padding:26px 30px;}
+    .sidebar{width:290px; padding:34px 22px;}
+    .main{padding:10px 30px 60px;}
+    .nav-item{padding:14px 16px; font-size:1rem;}
+    .card{padding:28px;}
+    .mat-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));}
+    :focus-visible{outline-width:4px; outline-offset:4px;}
+    .btn{padding:14px 22px; font-size:1rem;}
+  }
+
+  /* ---------- app frame / shell ---------- */
+  .app-frame{min-height:100vh;}
+  .shell{display:flex; min-height:100vh;}
+  .main{flex:1; min-width:0; padding:28px 32px 90px; max-width:1400px;}
+  .page-head{margin-bottom:22px;}
+  .page-head .eyebrow{color:var(--text-muted); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; font-weight:600;}
+  .page-head h1{font-size:1.9rem; margin-top:4px;}
+
+  /* ---------- sidebar ---------- */
+  .sidebar{
+    width:250px; flex-shrink:0; background:linear-gradient(180deg,var(--sidebar-bg),var(--sidebar-bg-2));
+    color:#EAF3EA; padding:26px 18px; display:flex; flex-direction:column; gap:26px;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand .cap{font-size:1.7rem;}
+  .brand-text{font-family:'Georgia',serif; font-weight:700; font-size:1.15rem; letter-spacing:.03em;}
+  .user-badge{background:rgba(255,255,255,.06); border:1px solid var(--sidebar-line); border-radius:var(--radius-sm); padding:12px 14px;}
+  .user-badge .name{font-weight:700; font-size:1.02rem;}
+  .user-badge .meta{color:#B9CCB9; font-size:.82rem; margin-top:2px;}
+  .nav-group{display:flex; flex-direction:column; gap:2px;}
+  .nav-label{color:#8FAE8F; font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; margin:6px 4px 6px;}
+  .nav-item{
+    display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
+    color:#D7E6D6; text-decoration:none; font-size:.92rem; font-weight:500; border:none; background:transparent; width:100%; text-align:left;
+  }
+  .nav-item .ic{width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.08); font-size:14px; flex-shrink:0;}
+  .nav-item:hover{background:rgba(255,255,255,.06);}
+  .nav-item.active{background:var(--accent); color:#fff;}
+  .nav-item.active .ic{background:rgba(255,255,255,.22);}
+  .sidebar-foot{margin-top:auto; display:flex; flex-direction:column; gap:4px;}
+
+  /* ---------- bottom nav (phone) ---------- */
+  .bottom-nav{
+    display:none; position:fixed; bottom:0; left:0; right:0; z-index:200;
+    background:var(--sidebar-bg); border-top:1px solid var(--sidebar-line);
+    padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+    justify-content:space-around;
+  }
+  .bottom-nav button{
+    background:none; border:none; color:#B9CCB9; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:.58rem; font-weight:600; padding:4px 3px; border-radius:10px; flex:1; min-width:0;
+  }
+  .bottom-nav button .ic{font-size:17px;}
+  .bottom-nav button.active{color:#fff;}
+  .bottom-nav button.active .ic{color:var(--gold);}
+
+  /* ---------- generic cards / ui ---------- */
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px;}
+  .card h3{font-size:1.05rem; margin-bottom:14px;}
+  .grid{display:grid; gap:16px;}
+  .grid-4{grid-template-columns:repeat(4,1fr);}
+  .grid-3{grid-template-columns:repeat(3,1fr);}
+  .grid-2{grid-template-columns:2fr 1fr;}
+  @media (max-width:1180px){ .grid-4{grid-template-columns:repeat(2,1fr);} .grid-2{grid-template-columns:1fr;} }
+  @media (max-width:640px){ .grid-4{grid-template-columns:1fr 1fr;} .grid-3{grid-template-columns:1fr 1fr;} }
+
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; border:none; border-radius:10px; padding:11px 18px; font-weight:600; font-size:.92rem;}
+  .btn-primary{background:var(--accent); color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-ghost{background:var(--accent-light); color:var(--accent-dark);}
+  .btn-outline{background:transparent; border:1px solid var(--border); color:var(--text);}
+  .btn-block{width:100%;}
+  .btn-sm{padding:7px 12px; font-size:.8rem; border-radius:8px;}
+  .btn-danger{background:#FBE4E1; color:var(--danger);}
+
+  label{display:block; font-size:.8rem; font-weight:700; color:#3a423c; margin:12px 0 6px;}
+  label:first-of-type{margin-top:0;}
+  input[type=text],input[type=email],input[type=password],input[type=datetime-local],input[type=date],input[type=number],select,textarea{
+    width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--border); background:#F6F7F4; color:var(--text); font-size:.9rem;
+  }
+  textarea{resize:vertical; min-height:80px;}
+  input:focus,select:focus,textarea:focus{background:#fff; border-color:var(--accent);}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  @media (max-width:640px){.field-row{grid-template-columns:1fr;}}
+
+  .pill{display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:999px; font-size:.78rem; font-weight:600;}
+  .pill-green{background:var(--accent-light); color:var(--accent-dark);}
+  .pill-gold{background:#FBF0D6; color:#8A6A15;}
+  .pill-outline{background:#fff; border:1px solid var(--border); color:var(--text-muted);}
+
+  .empty-state{border:1.5px dashed var(--border); border-radius:var(--radius-sm); padding:26px 16px; text-align:center; color:var(--text-muted); font-size:.88rem;}
+  .empty-state .big{font-size:1.6rem; display:block; margin-bottom:6px;}
+
+  .tabs{display:flex; gap:6px; background:#EAEBE6; padding:4px; border-radius:11px; width:fit-content;}
+  .tabs button{background:transparent; border:none; padding:9px 18px; border-radius:8px; font-weight:600; font-size:.86rem; color:var(--text-muted);}
+  .tabs button.active{background:#fff; color:var(--text); box-shadow:0 1px 2px rgba(0,0,0,.08);}
+
+  /* ---------- auth ---------- */
+  .auth-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; background:radial-gradient(circle at 30% 20%, #17331f 0%, #0c1c12 65%);}
+  .auth-card{background:#fff; border-radius:20px; padding:38px 34px; width:100%; max-width:430px; box-shadow:0 30px 70px rgba(0,0,0,.4);}
+  .auth-logo{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:6px;}
+  .auth-logo .cap{font-size:1.8rem;}
+  .auth-logo h2{font-size:1.4rem;}
+  .auth-tagline{text-align:center; color:var(--text-muted); font-size:.88rem; margin:8px 0 22px; line-height:1.4;}
+  .auth-tabs{display:flex; gap:6px; background:#EDEEE9; padding:4px; border-radius:11px; margin-bottom:20px;}
+  .auth-tabs button{flex:1; background:transparent; border:none; padding:10px; border-radius:8px; font-weight:700; font-size:.86rem; color:var(--text-muted);}
+  .auth-tabs button.active{background:var(--accent); color:#fff;}
+  .auth-error{background:#FBE4E1; color:var(--danger); padding:9px 12px; border-radius:8px; font-size:.82rem; margin-bottom:12px;}
+  .auth-demo{text-align:center; margin-top:14px; font-size:.8rem; color:var(--text-muted);}
+  .auth-demo button{background:none;border:none;color:var(--accent-dark);font-weight:700;text-decoration:underline;}
+
+  /* ---------- dashboard ---------- */
+  .welcome-banner{background:linear-gradient(120deg,var(--sidebar-bg),#1c4028); color:#fff; border-radius:var(--radius); padding:24px 26px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+  .welcome-banner h2{font-size:1.25rem; font-weight:700; font-family:inherit;}
+  .welcome-banner p{color:#CFE3CF; font-size:.85rem; margin-top:4px;}
+  .stat-card{display:flex; flex-direction:column; gap:6px;}
+  .stat-card .num{font-size:1.9rem; font-weight:800; font-family:Georgia,serif; color:var(--accent-dark);}
+  .stat-card .lbl{font-size:.78rem; color:var(--text-muted); font-weight:600;}
+  .section-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+
+  /* ---------- materials ---------- */
+  .dropzone{border:2px dashed #BBD6BE; border-radius:var(--radius-sm); background:var(--accent-light); padding:26px; text-align:center; margin-bottom:16px;}
+  .dropzone .big{font-size:1.8rem;}
+  .dropzone p{font-size:.85rem; color:var(--accent-dark); margin:6px 0 12px;}
+  .mat-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:14px;}
+  .mat-card{border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; background:#fff;}
+  .mat-thumb{height:80px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:1.3rem; letter-spacing:.03em;}
+  .mat-body{padding:11px 12px;}
+  .mat-title{font-weight:700; font-size:.85rem; line-height:1.25;}
+  .mat-meta{font-size:.72rem; color:var(--text-muted); margin-top:4px;}
+  .mat-foot{display:flex; align-items:center; justify-content:space-between; margin-top:8px;}
+  .mat-size{font-size:.7rem; color:var(--text-muted);}
+
+  /* ---------- AI Study ---------- */
+  .ai-layout{display:grid; grid-template-columns:320px 1fr; gap:18px; align-items:start;}
+  @media (max-width:960px){.ai-layout{grid-template-columns:1fr;}}
+  .quick-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;}
+  .quick-btn{background:#F6F7F4; border:1px solid var(--border); border-radius:10px; padding:12px 8px; text-align:center; font-size:.78rem; font-weight:700; color:var(--text);}
+  .quick-btn:hover{border-color:var(--accent); color:var(--accent-dark);}
+  .quick-btn .ic{display:block; font-size:1.2rem; margin-bottom:4px;}
+  .chat-panel{display:flex; flex-direction:column; height:min(640px,72vh); background:var(--sidebar-bg); border-radius:var(--radius); overflow:hidden;}
+  .chat-head{padding:16px 18px; color:#fff; border-bottom:1px solid var(--sidebar-line); display:flex; align-items:center; gap:10px;}
+  .chat-messages{flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:12px; background:#F3F5F1;}
+  .msg{max-width:80%; padding:11px 14px; border-radius:14px; font-size:.88rem; line-height:1.5; white-space:pre-wrap;}
+  .msg-assistant{background:#fff; border:1px solid var(--border); align-self:flex-start; border-bottom-left-radius:4px;}
+  .msg-user{background:var(--accent); color:#fff; align-self:flex-end; border-bottom-right-radius:4px;}
+  .msg-loading{align-self:flex-start; color:var(--text-muted); font-size:.82rem; font-style:italic;}
+  .chat-input-row{display:flex; gap:8px; padding:12px; background:#fff; border-top:1px solid var(--border);}
+  .chat-input-row textarea{flex:1; min-height:44px; max-height:120px; border-radius:12px;}
+  .chat-input-row button{width:46px; height:46px; border-radius:12px; background:var(--accent); color:#fff; border:none; font-size:16px; flex-shrink:0;}
+
+  /* ---------- schedule ---------- */
+  .rem-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:12px;}
+  .rem-card{border-radius:12px; padding:13px 14px; border:1px solid var(--border);}
+  .rem-day{font-weight:800; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase;}
+  .rem-title{font-weight:700; font-size:.86rem; margin:5px 0 6px;}
+  .rem-time{font-size:.76rem; color:var(--text-muted);}
+  .cat-legend{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+  .cat-legend .row{display:flex; align-items:center; gap:8px; font-size:.82rem;}
+  .cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .mini-cal{width:100%; border-collapse:collapse; font-size:.78rem; margin-top:10px;}
+  .mini-cal th{color:var(--text-muted); font-weight:700; padding:4px 0; font-size:.68rem;}
+  .mini-cal td{text-align:center; padding:6px 0; border-radius:8px;}
+  .mini-cal td.today{background:var(--accent); color:#fff; font-weight:800;}
+  .mini-cal td.muted{color:#c7cbc2;}
+
+  /* ---------- goals ---------- */
+  .goal-row{border:1px solid var(--border); border-radius:12px; padding:13px 15px; margin-bottom:10px;}
+  .goal-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:10px;}
+  .goal-name{font-weight:700; font-size:.9rem;}
+  .goal-cat{font-size:.72rem; color:var(--text-muted);}
+  .progress-track{height:9px; background:#E9EAE4; border-radius:999px; overflow:hidden;}
+  .progress-fill{height:100%; background:var(--accent); border-radius:999px; transition:width .3s;}
+  .range-label{display:flex; justify-content:space-between; font-size:.78rem; color:var(--text-muted); margin-top:6px;}
+  input[type=range]{width:100%; accent-color:var(--accent);}
+
+  /* ---------- profile ---------- */
+  .profile-head{display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+  .avatar-lg{width:78px; height:78px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--sidebar-bg)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.7rem; font-weight:800; flex-shrink:0; position:relative;}
+  .avatar-badge{position:absolute; bottom:-2px; right:-2px; width:26px; height:26px; border-radius:50%; background:#fff; border:2px solid var(--card); display:flex; align-items:center; justify-content:center; font-size:12px;}
+  .profile-tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+  .completeness{margin-top:14px;}
+  .completeness .track{height:7px; background:#E9EAE4; border-radius:999px; overflow:hidden; margin-top:6px;}
+  .completeness .fill{height:100%; background:var(--gold);}
+
+  .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#173420; color:#fff; padding:12px 20px; border-radius:10px; font-size:.85rem; box-shadow:var(--shadow); z-index:900;}
+
+  /* ---------- responsive breakpoints ---------- */
+  @media (max-width:900px){
+    .sidebar{width:78px; padding:22px 10px; align-items:center;}
+    .brand-text,.user-badge .meta,.user-badge .name,.nav-label,.nav-item span.label,.sidebar-foot span.label{display:none;}
+    .user-badge{padding:8px; display:flex; justify-content:center;}
+    .nav-item{justify-content:center; padding:12px;}
+    .main{padding:24px 18px 90px;}
+  }
+  @media (max-width:640px){
+    .sidebar{display:none;}
+    .bottom-nav{display:flex;}
+    .main{padding:18px 14px 90px;}
+    .welcome-banner{flex-direction:column; align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+/* ============================= DATA ============================= */
+const UNIVERSITIES = [
+  "University of Nigeria, Nsukka","Covenant University","University of Benin","Osun State University",
+  "Delta State University","Afe Babalola University","University of Lagos","Obafemi Awolowo University",
+  "University of Ibadan","Ahmadu Bello University","University of Port Harcourt","Lagos State University",
+  "Federal University of Technology, Akure","Federal University of Technology, Minna","University of Ilorin",
+  "Nnamdi Azikiwe University","Ladoke Akintola University of Technology","Bayero University Kano",
+  "University of Calabar","Ekiti State University","Babcock University","Bowen University",
+  "Redeemer's University","Landmark University","Bells University of Technology","Pan-Atlantic University",
+  "Federal University of Agriculture, Abeokuta","Rivers State University","Imo State University",
+  "Enugu State University of Science and Technology","Abia State University","Benue State University",
+  "Kaduna State University","Kano University of Science and Technology","University of Jos",
+  "University of Uyo","University of Abuja","Federal University, Oye-Ekiti","Chukwuemeka Odumegwu Ojukwu University",
+  "Michael Okpara University of Agriculture","Nasarawa State University","Modibbo Adama University"
+];
+const DEPARTMENTS = [
+  "Business Administration","Computer Engineering","Computer Science","Law","Radiography","Anatomy",
+  "Mechanical Engineering","Electrical Engineering","Civil Engineering","Chemical Engineering","Petroleum Engineering",
+  "Accounting","Banking and Finance","Economics","Political Science","Mass Communication","Public Administration",
+  "Sociology","Psychology","English Language","History and International Studies","Philosophy","Theatre Arts",
+  "Medicine and Surgery","Nursing Science","Pharmacy","Physiology","Medical Laboratory Science","Public Health",
+  "Biochemistry","Microbiology","Botany","Zoology","Physics","Chemistry","Mathematics","Statistics",
+  "Agricultural Science","Architecture","Estate Management","Urban and Regional Planning","Surveying and Geoinformatics",
+  "Food Science and Technology","Human Nutrition and Dietetics","Marketing","Insurance","Actuarial Science",
+  "Library and Information Science","Guidance and Counselling","Educational Administration","Fine and Applied Arts",
+  "Music","Linguistics","Religious Studies","Criminology and Security Studies","International Relations"
+];
+const LEVELS = ["100 Level","200 Level","300 Level","400 Level","500 Level","600 Level"];
+const DEPT_SHORT = {"Business Administration":"Bus Admin","Computer Engineering":"Comp Eng","Law":"Law","Radiography":"Radiography","Anatomy":"Anatomy","Mechanical Engineering":"Mech Eng"};
+const LEVEL_SHORT = {"100 Level":"100lv","200 Level":"200lv","300 Level":"300lv","400 Level":"400lv","500 Level":"500lv","600 Level":"600lv"};
+
+const REMINDER_CATS = {
+  "Study Session": {bg:"#DCEBFB", fg:"#1D5FA6", dot:"#2E7BD6", ic:"📘"},
+  "Assignment Due": {bg:"#FCEEDC", fg:"#B4650C", dot:"#E08A2E", ic:"📝"},
+  "Exam/Test": {bg:"#FBE0DD", fg:"#B23223", dot:"#D9463A", ic:"📄"},
+  "General Reminder": {bg:"#E1F0E3", fg:"#2E6E3A", dot:"#3C8B4A", ic:"🔔"},
+  "Class/Lecture": {bg:"#EBE1FA", fg:"#6438A6", dot:"#8B5FBF", ic:"🎓"},
+  "Group Work": {bg:"#E7E7E7", fg:"#3A3A3A", dot:"#3A3A3A", ic:"👥"}
+};
+const GOAL_CATS = ["Exam Prep","Personal Development","Academics","Career","Skill Building"];
+const THUMB_COLORS = ["#2E6E3A","#1D4ED8","#B45309","#7C3AED","#DC2626","#0F766E","#BE185D","#334155"];
+
+function hashColor(str){ let h=0; for(let i=0;i<str.length;i++) h=(h+str.charCodeAt(i)*7)%THUMB_COLORS.length; return THUMB_COLORS[h]; }
+function initialsOf(str){ const w=str.trim().split(/\s+/); return (w[0]?.[0]||"?").toUpperCase()+(w[1]?.[0]||"").toUpperCase(); }
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+/* Password input with a show/hide toggle */
+function passwordField(name, placeholder, extra=""){
+  return `<div style="position:relative;">
+    <input type="password" name="${name}" placeholder="${placeholder}" ${extra} style="padding-right:42px;">
+    <button type="button" onclick="togglePwd(this)" aria-label="Show or hide password" style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); font-size:15px; padding:8px;">👁</button>
+  </div>`;
+}
+function togglePwd(btn){
+  const input = btn.previousElementSibling;
+  if(input.type === "password"){ input.type = "text"; btn.textContent = "🙈"; }
+  else { input.type = "password"; btn.textContent = "👁"; }
+}
+
+/* Type-or-pick field: a normal native dropdown (correct position, arrow,
+   opens like any other select) with an "Other" option that reveals a text
+   box for anything not on the list. */
+function comboField(name, options, placeholder, currentValue=""){
+  const isOther = currentValue && !options.includes(currentValue);
+  const uidStr = uid();
+  const selId = `sel_${name}_${uidStr}`;
+  const inputId = `inp_${name}_${uidStr}`;
+  return `<select id="${selId}" onchange="syncComboField('${selId}','${inputId}')">
+    <option value="" ${currentValue?'':'selected'} disabled>${placeholder}</option>
+    ${options.map(o=>`<option value="${o.replace(/"/g,'&quot;')}" ${o===currentValue?'selected':''}>${o}</option>`).join('')}
+    <option value="__other__" ${isOther?'selected':''}>Other (type your own)</option>
+  </select>
+  <input type="text" name="${name}" id="${inputId}" placeholder="Type it here" value="${(isOther?currentValue:'').replace(/"/g,'&quot;')}" style="display:${isOther?'block':'none'}; margin-top:8px;">`;
+}
+function syncComboField(selId, inputId){
+  const sel = document.getElementById(selId);
+  const input = document.getElementById(inputId);
+  if(sel.value === "__other__"){
+    input.style.display = "block";
+    input.value = "";
+    input.focus();
+  } else {
+    input.style.display = "none";
+    input.value = sel.value;
+  }
+}
+
+const SUBJECT_VISUALS = [
+  {match:/computer|software|programming/i, emoji:"💻", grad:["#2b5fb8","#173a7a"]},
+  {match:/account|finance|bank/i, emoji:"🏦", grad:["#caa23a","#8a6a15"]},
+  {match:/management/i, emoji:"📊", grad:["#2E6FE0","#173a7a"]},
+  {match:/social science|sociology/i, emoji:"🧑‍🤝‍🧑", grad:["#7C3AED","#4C1D95"]},
+  {match:/natural science|biology|chemistry|physics/i, emoji:"🔬", grad:["#0F766E","#064e42"]},
+  {match:/library/i, emoji:"🏛️", grad:["#B45309","#7c3a05"]},
+  {match:/statistics|economics/i, emoji:"📈", grad:["#334155","#0f172a"]},
+  {match:/logic|philosophy/i, emoji:"🧠", grad:["#BE185D","#831843"]},
+  {match:/law/i, emoji:"⚖️", grad:["#1F2937","#0b0f14"]},
+  {match:/marketing|consumer|public relation/i, emoji:"📣", grad:["#DC2626","#7f1616"]},
+  {match:/financial management/i, emoji:"💰", grad:["#166534","#0b3b1c"]}
+];
+function subjectVisual(title){
+  const found = SUBJECT_VISUALS.find(v=>v.match.test(title));
+  if(found) return found;
+  const c = hashColor(title);
+  return {emoji:"📄", grad:[c,c]};
+}
+
+/* Community starts genuinely empty — it only ever fills up from real posts made
+   through the Materials page, matched to university + department + level */
+const communityPosts = [];
+
+const DEMO_EMAIL = "splash@university.edu.ng";
+const users = [
+  {id:uid(), name:"Splash", email:DEMO_EMAIL, password:"demo1234", university:"University of Nigeria, Nsukka", department:"Business Administration", level:"300 Level",
+    materials:[], reminders:[], goals:[]}
+];
+
+/* ============================= PERSISTENCE ============================= */
+/* Saves to this browser's local storage so accounts/materials/reminders/goals
+   survive a refresh — without this, everything lived only in memory and any
+   account created was lost the moment the page reloaded. */
+const STORAGE_KEY = "uniassist_app_data_v1";
+function saveData(){
+  try{
+    const stripFile = m => { const {fileBlob, ...rest} = m; return rest; };
+    const usersLight = users.map(u => ({...u, materials: (u.materials||[]).map(stripFile)}));
+    const communityLight = communityPosts.map(stripFile);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({users:usersLight, communityPosts:communityLight}));
+  }catch(e){
+    showToast("⚠️ Your browser storage is full — try removing older items.");
+  }
+}
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const parsed = JSON.parse(raw);
+    if(Array.isArray(parsed.users) && parsed.users.length){
+      users.length = 0;
+      users.push(...parsed.users);
+    }
+    if(Array.isArray(parsed.communityPosts)){
+      communityPosts.length = 0;
+      communityPosts.push(...parsed.communityPosts);
+    }
+  }catch(e){ /* corrupted/blocked storage — fall back to defaults */ }
+}
+loadData();
+
+/* API key is stored separately, and only in THIS browser — it is never synced
+   or shared with other users/devices. Anyone else opening this file needs
+   to connect their own key. */
+const AI_KEY_STORAGE = "uniassist_ai_key_v1";
+function saveApiKeyToStorage(key){ try{ localStorage.setItem(AI_KEY_STORAGE, key); }catch(e){} }
+function loadApiKeyFromStorage(){ try{ return localStorage.getItem(AI_KEY_STORAGE) || ""; }catch(e){ return ""; } }
+function clearApiKeyFromStorage(){ try{ localStorage.removeItem(AI_KEY_STORAGE); }catch(e){} }
+
+/* ============================= STATE ============================= */
+const state = {
+  view:"auth",              // auth | app
+  authMode:"signin",
+  authError:"",
+  currentUserId:null,
+  activePage:"dashboard",
+  profileTab:"view",
+  chat:[],
+  chatLoading:false,
+  aiApiKey: loadApiKeyFromStorage(),
+  showKeyPanel:false,
+  pendingDocument:null,
+  toast:null
+};
+
+function currentUser(){ return users.find(u=>u.id===state.currentUserId) || null; }
+function showToast(msg){ state.toast = msg; render(); setTimeout(()=>{ state.toast=null; render(); }, 2200); }
+
+/* ============================= ICONS (small inline set) ============================= */
+const ICON = {
+  dashboard:"🏢", materials:"📘", ai:"🤖", schedule:"⏱", goal:"🎯", profile:"👤",
+  logout:"↩", plus:"＋", download:"⬇", send:"➤", mail:"✉", lock:"🔒", check:"✓",
+  camera:"📷", phone:"📱", desktop:"🖥️", tv:"📺", edit:"✎", bell:"🔔"
+};
+/* icon badge colors, matched to the source app's nav */
+const ICON_BG = {dashboard:"#2E6FE0", materials:"#6D5AE0", ai:"#6B7280", schedule:"#E08A2E", goal:"#C0392B", profile:"#3C8B4A"};
+
+/* ============================= AUTH ============================= */
+function handleSignIn(e){
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const email = f.get("email").trim().toLowerCase();
+  const pass = f.get("password");
+  const u = users.find(u=>u.email.toLowerCase()===email);
+  if(!u || u.password!==pass){
+    state.authError = "We couldn't find an account with that email and password.";
+    render();
+    return false;
+  }
+  state.authError="";
+  state.currentUserId = u.id;
+  state.view="app";
+  state.activePage="dashboard";
+  render();
+  return false;
+}
+
+function handleSignUp(e){
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const name=f.get("name").trim(), email=f.get("email").trim(), pass=f.get("password");
+  const university=f.get("university"), department=f.get("department"), level=f.get("level");
+  if(!name||!email||!pass||!university||!department||!level){
+    state.authError="Please fill in every field to create your account.";
+    render(); return false;
+  }
+  if(users.some(u=>u.email.toLowerCase()===email.toLowerCase())){
+    state.authError="An account with that email already exists.";
+    render(); return false;
+  }
+  const u = {id:uid(), name, email, password:pass, university, department, level, materials:[], reminders:[], goals:[]};
+  users.push(u);
+  saveData();
+  state.authError="";
+  state.currentUserId=u.id;
+  state.view="app";
+  state.activePage="dashboard";
+  render();
+  return false;
+}
+
+function useDemoAccount(){
+  state.currentUserId = users.find(u=>u.email===DEMO_EMAIL).id;
+  state.view="app"; state.activePage="dashboard";
+  render();
+}
+
+function signOut(){
+  state.currentUserId=null; state.view="auth"; state.authMode="signin"; state.chat=[];
+  render();
+}
+
+/* ============================= NAV ============================= */
+const NAV = [
+  {group:"MAIN", items:[["dashboard","Dashboard",ICON.dashboard],["materials","Materials",ICON.materials]]},
+  {group:"AI TOOLS", items:[["aistudy","AI Study",ICON.ai]]},
+  {group:"PLANNER", items:[["schedule","Schedule",ICON.schedule],["goal","Goal",ICON.goal]]}
+];
+function goTo(page){ state.activePage=page; if(page==="profile") state.profileTab="view"; render(); window.scrollTo(0,0); }
+
+/* ============================= RENDER: SHELL ============================= */
+
+function renderSidebar(){
+  const u = currentUser();
+  return `
+  <aside class="sidebar">
+    <div class="brand"><span class="cap">🎓</span><div><div class="brand-text">UNI ASSIST</div></div></div>
+    <div class="user-badge">
+      <div class="name">${u.name}</div>
+      <div class="meta">${DEPT_SHORT[u.department]||u.department} ${LEVEL_SHORT[u.level]||''}</div>
+    </div>
+    ${NAV.map(g=>`
+      <div class="nav-group">
+        <div class="nav-label">${g.group}</div>
+        ${g.items.map(([id,label,ic])=>`
+          <button class="nav-item ${state.activePage===id?'active':''}" onclick="goTo('${id}')">
+            <span class="ic" style="background:${ICON_BG[id]||'rgba(255,255,255,.08)'};">${ic}</span><span class="label">${label}</span>
+          </button>`).join('')}
+      </div>`).join('')}
+    <div class="sidebar-foot">
+      <button class="nav-item ${state.activePage==='profile'?'active':''}" onclick="goTo('profile')"><span class="ic">${ICON.profile}</span><span class="label">Profile</span></button>
+      <button class="nav-item" onclick="signOut()"><span class="ic">${ICON.logout}</span><span class="label">Log Out</span></button>
+    </div>
+  </aside>`;
+}
+
+function renderBottomNav(){
+  const items = [["dashboard",ICON.dashboard,"Home"],["materials",ICON.materials,"Materials"],["aistudy",ICON.ai,"AI"],["schedule",ICON.schedule,"Reminders"],["goal",ICON.goal,"Goals"],["profile",ICON.profile,"Profile"]];
+  return `<nav class="bottom-nav">${items.map(([id,ic,label])=>`
+    <button class="${state.activePage===id?'active':''}" onclick="goTo('${id}')"><span class="ic" style="background:transparent;">${ic}</span>${label}</button>
+  `).join('')}</nav>`;
+}
+
+const PAGES = {
+  dashboard: pageDashboard, materials: pageMaterials, aistudy: pageAIStudy,
+  schedule: pageSchedule, goal: pageGoal, profile: pageProfile
+};
+
+function renderApp(){
+  const u = currentUser();
+  return `
+  <div class="app-frame">
+    <div class="shell">
+      ${renderSidebar()}
+      <main class="main">${PAGES[state.activePage](u)}</main>
+    </div>
+    ${renderBottomNav()}
+  </div>
+  ${state.toast?`<div class="toast">${state.toast}</div>`:''}
+  `;
+}
+
+/* ============================= PAGE: DASHBOARD ============================= */
+function statBadge(key){
+  return `<span style="position:absolute; top:18px; right:18px; width:30px; height:30px; border-radius:9px; background:${ICON_BG[key]}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;">${ICON[key]}</span>`;
+}
+function pageDashboard(u){
+  const recent = [...u.materials].slice(-3).reverse();
+  const upcoming = [...u.reminders].filter(r=>new Date(r.datetime)>=new Date()).sort((a,b)=>new Date(a.datetime)-new Date(b.datetime))[0];
+  const avgGoal = u.goals.length ? Math.round(u.goals.reduce((a,g)=>a+g.progress,0)/u.goals.length) : 0;
+  return `
+    <div class="welcome-banner">
+      <div>
+        <h2>Welcome back, ${u.name}!</h2>
+        <p>Keep pushing — your ${u.level} goals are within reach.</p>
+      </div>
+      <span class="pill pill-gold">${u.university}</span>
+    </div>
+    <div class="grid grid-4" style="margin-bottom:20px;">
+      <div class="card stat-card" style="position:relative;">${statBadge('materials')}<span class="num">${u.materials.length}</span><span class="lbl">Materials Uploaded</span></div>
+      <div class="card stat-card" style="position:relative;">${statBadge('ai')}<span class="num">${state.chat.filter(m=>m.role==='user').length}</span><span class="lbl">AI Sessions</span></div>
+      <div class="card stat-card" style="position:relative;">${statBadge('schedule')}<span class="num">${u.reminders.filter(r=>new Date(r.datetime)>=new Date()).length}</span><span class="lbl">Upcoming Reminders</span></div>
+      <div class="card stat-card" style="position:relative;">${statBadge('goal')}<span class="num">${avgGoal}%</span><span class="lbl">Avg Goal Progress</span></div>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="section-row"><h3>Recent Materials</h3><button class="btn btn-ghost btn-sm" onclick="goTo('materials')">View all →</button></div>
+        ${recent.length? `<div class="mat-grid">${recent.map(matCard).join('')}</div>` :
+          `<div class="empty-state"><span class="big">📂</span>No materials yet. Head to <strong>Materials</strong> to post your first resource.</div>`}
+      </div>
+      <div class="card">
+        <div class="section-row"><h3>Upcoming Reminder</h3><button class="btn btn-ghost btn-sm" onclick="goTo('schedule')">Manage</button></div>
+        ${upcoming? renderReminderCard(upcoming) :
+          `<div class="empty-state"><span class="big">🔔</span>No reminder set.</div>`}
+      </div>
+    </div>
+  `;
+}
+
+/* ============================= PAGE: MATERIALS ============================= */
+/* index of every material by id so a download button can find its file
+   data even though the same material appears in multiple lists */
+const materialsIndex = {};
+function indexMaterial(m){ materialsIndex[m.id] = m; }
+function reindexAllMaterials(){
+  users.forEach(u => (u.materials||[]).forEach(indexMaterial));
+  communityPosts.forEach(indexMaterial);
+}
+reindexAllMaterials();
+
+/* File bytes are stored in IndexedDB, not localStorage — localStorage has a
+   tiny quota (a few MB) and silently fails once exceeded, which is exactly
+   what was making downloads say "no file attached" after a reload. IndexedDB
+   has a much larger quota and is meant for this. */
+const FILE_DB_NAME = "uniassist_files_v1";
+const FILE_STORE = "files";
+function openFileDB(){
+  return new Promise((resolve,reject)=>{
+    if(!window.indexedDB){ reject(new Error("IndexedDB unavailable")); return; }
+    const req = indexedDB.open(FILE_DB_NAME, 1);
+    req.onupgradeneeded = () => { req.result.createObjectStore(FILE_STORE); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function saveFileBlob(id, blob){
+  try{
+    const db = await openFileDB();
+    return await new Promise((resolve,reject)=>{
+      const tx = db.transaction(FILE_STORE, "readwrite");
+      tx.objectStore(FILE_STORE).put(blob, id);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  }catch(e){ return false; }
+}
+async function loadFileBlob(id){
+  try{
+    const db = await openFileDB();
+    return await new Promise((resolve,reject)=>{
+      const tx = db.transaction(FILE_STORE, "readonly");
+      const req = tx.objectStore(FILE_STORE).get(id);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  }catch(e){ return null; }
+}
+
+function downloadMaterial(id){
+  const m = materialsIndex[id];
+  if(!m){ showToast("Couldn't find that material."); return; }
+  const finishDownload = (blob) => {
+    if(!blob){ showToast("No file is attached to this item yet."); return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = m.fileName || `${m.title.replace(/[^\w\- ]/g,"")}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    showToast(`Downloading ${m.fileName || m.title}…`);
+  };
+  if(m.fileBlob){ finishDownload(m.fileBlob); return; }
+  // not in memory (e.g. loaded from a previous session) — check IndexedDB
+  loadFileBlob(id).then(finishDownload);
+}
+
+function matCard(m){
+  const v = subjectVisual(m.title);
+  return `<div class="mat-card">
+    <div class="mat-thumb" style="background:linear-gradient(135deg,${v.grad[0]},${v.grad[1]}); font-size:1.9rem;">${v.emoji}</div>
+    <div class="mat-body">
+      <div class="mat-title">${m.title}</div>
+      <div class="mat-meta">${m.course} · ${m.weeks}${m.owner?` · ${m.owner}`:''}</div>
+      <div class="mat-foot"><span class="mat-size">${m.size}</span><button class="btn btn-ghost btn-sm" title="Download" onclick="downloadMaterial('${m.id}')">${ICON.download}</button></div>
+    </div>
+  </div>`;
+}
+
+function pageMaterials(u){
+  const community = communityPosts.filter(p=>p.university===u.university && p.department===u.department && p.level===u.level);
+  return `
+    <div class="page-head"><div class="eyebrow">Materials</div><h1>Resource Center</h1></div>
+    <div class="card" style="margin-bottom:20px;">
+      <h3>Contribute to the excellence of your academic community</h3>
+      <form onsubmit="return handlePostMaterial(event)">
+        <div class="grid grid-2">
+          <div class="dropzone" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+            <span class="big">📎</span>
+            <p style="margin:0;">Drop & Drag Materials</p>
+            <p style="font-size:.75rem;">Upload lecture notes, past questions (PDF, PNG), or a study guide. Max file size 500MB.</p>
+            <input type="file" id="fileInput" style="display:none" onchange="document.getElementById('fileNameLabel').innerText = this.files[0] ? this.files[0].name : 'No file selected';">
+            <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('fileInput').click()">Select File From Device</button>
+            <span id="fileNameLabel" style="font-size:.72rem; color:var(--accent-dark);">No file selected</span>
+          </div>
+          <div style="background:#F6F7F4; border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px;">
+            <h3 style="font-size:.85rem; margin-bottom:10px;">Document Details</h3>
+            <label>Subject</label><input type="text" name="title" placeholder="e.g. Company Law" required>
+            <label>Course Code</label><input type="text" name="course" placeholder="e.g. LAW 212" required>
+            <label>Week(s) Covered</label><input type="text" name="weeks" placeholder="e.g. Week 1-5" required>
+            <label>Level</label><select name="level">${LEVELS.map(l=>`<option ${l===u.level?'selected':''}>${l}</option>`).join('')}</select>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:16px;" type="submit">${ICON.plus} Post Material</button>
+      </form>
+    </div>
+
+    <div class="section-row"><h3 style="font-size:1.1rem;">Community Gallery <span style="font-weight:400;color:var(--text-muted);font-size:.8rem;">— top materials from your department</span></h3></div>
+    ${community.length ? `<div class="mat-grid" style="margin-bottom:24px;">${community.map(matCard).join('')}</div>` :
+      `<div class="empty-state" style="margin-bottom:24px;"><span class="big">🌱</span>Nothing shared in your department and level yet. Be the first to post above!</div>`}
+
+    <div class="section-row"><h3 style="font-size:1.1rem;">My Library <span style="font-weight:400;color:var(--text-muted);font-size:.8rem;">— uploaded and downloaded materials</span></h3></div>
+    ${u.materials.length ? `<div class="mat-grid">${[...u.materials].reverse().map(matCard).join('')}</div>` :
+      `<div class="empty-state"><span class="big">📭</span>No materials yet. Anything you post will appear here.</div>`}
+  `;
+}
+
+const MAX_MATERIAL_BYTES = 500 * 1024 * 1024; // 500MB — IndexedDB can hold it; actual mobile browser quota may vary (see note to user)
+function handlePostMaterial(e){
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const u = currentUser();
+  const title=f.get("title"), course=f.get("course"), weeks=f.get("weeks"), level=f.get("level");
+  const fileInputEl = document.getElementById('fileInput');
+  const file = fileInputEl && fileInputEl.files[0];
+
+  function finish(blob, fileMime, fileName, sizeLabel){
+    const mat = {id:uid(), title, course, weeks, level, size:sizeLabel, fileMime, fileName, fileBlob: blob};
+    u.materials.push(mat);
+    const communityCopy = {...mat, university:u.university, department:u.department, owner:u.name};
+    communityPosts.push(communityCopy);
+    indexMaterial(mat);
+    indexMaterial(communityCopy);
+    if(blob) saveFileBlob(mat.id, blob); // persisted separately in IndexedDB — survives reloads
+    saveData();
+    showToast("Material posted! It's now in your Library and visible to your department & level — and can be downloaded.");
+    e.target.reset();
+    if(document.getElementById('fileNameLabel')) document.getElementById('fileNameLabel').innerText = "No file selected";
+    render();
+  }
+
+  if(file && file.size > MAX_MATERIAL_BYTES){
+    showToast(`That file is too large (max ${(MAX_MATERIAL_BYTES/1024/1024).toFixed(0)}MB) — please choose a smaller file, or remove it to post details only.`);
+    return false;
+  }
+
+  if(file){
+    // File objects are already Blobs — store directly, no base64 conversion needed
+    const sizeKB = Math.max(1, Math.round(file.size/1024));
+    const sizeLabel = sizeKB>1024 ? (sizeKB/1024).toFixed(1)+"MB" : sizeKB+"KB";
+    finish(file, file.type, file.name, sizeLabel);
+  } else {
+    const placeholderText = `This is a placeholder file for "${title}" (${course}).\nNo document was attached when this was posted.`;
+    const blob = new Blob([placeholderText], {type:"text/plain"});
+    finish(blob, "text/plain", `${title.replace(/[^\w\- ]/g,"")}.txt`, "1KB");
+  }
+  return false;
+}
+
+/* ============================= PAGE: AI STUDY ============================= */
+const QUICK_PROMPTS = [
+  ["📝","CBT Questions","Generate 10 CBT-style multiple choice questions (with answers) on: ","Generate 10 CBT-style multiple choice questions (with answers) based on the attached document."],
+  ["📖","Theory Questions","Generate 5 theory/essay-style exam questions with model answers on: ","Generate 5 theory/essay-style exam questions with model answers based on the attached document."],
+  ["📄","Past Question","Give me a realistic past-question style exam paper on: ","Give me a realistic past-question style exam paper based on the attached document."],
+  ["💡","Summarise Topic","Summarise this topic into exam-ready notes: ","Summarise the attached document into exam-ready notes."]
+];
+
+function pageAIStudy(u){
+  const doc = state.pendingDocument;
+  return `
+    <div class="page-head"><div class="eyebrow">AI Tools</div><h1>AI Study Assistant</h1></div>
+    <div class="ai-layout">
+      <div>
+        <div class="card">
+          <p style="font-size:.88rem; color:var(--text-muted); line-height:1.5;">Import a document, paste your lecture notes, or just type a subject — then tell the AI what you want done with it.</p>
+
+          <label style="margin-top:14px;">Import a document</label>
+          <input type="file" id="docInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.md" style="display:none" onchange="handleDocumentImport(this)">
+          ${doc ? `
+            <div style="display:flex; align-items:center; gap:8px; background:var(--accent-light); border:1px solid #BBD6BE; border-radius:10px; padding:10px 12px;">
+              <span style="font-size:1.1rem;">📎</span>
+              <span style="flex:1; font-size:.8rem; font-weight:600; color:var(--accent-dark); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${doc.name}</span>
+              <button onclick="removePendingDocument()" title="Remove" style="background:none; border:none; color:var(--accent-dark); font-size:16px; line-height:1;">✕</button>
+            </div>
+            <p style="font-size:.72rem; color:var(--text-muted); margin-top:6px;">Attached — type a question or tap a quick action below to decide what to do with it.</p>
+          ` : `
+            <button type="button" class="btn btn-outline btn-block" onclick="document.getElementById('docInput').click()">📎 Choose PDF, image, or text file</button>
+            <p style="font-size:.72rem; color:var(--text-muted); margin-top:6px;">PDF, PNG, JPG, WEBP, TXT or MD. Max 3MB (the shared AI connection can't carry bigger files).</p>
+          `}
+
+          <div class="quick-grid">
+            ${QUICK_PROMPTS.map((p,i)=>`
+              <button class="quick-btn" onclick="usePrompt(${i})"><span class="ic">${p[0]}</span>${p[1]}</button>
+            `).join('')}
+          </div>
+          <label style="margin-top:18px;">Paste lecture notes (optional)</label>
+          <textarea id="notesArea" placeholder="Paste notes here — they'll be included with your next question."></textarea>
+        </div>
+        ${SHARED_AI_ENDPOINT ? `
+        <div class="card" style="margin-top:16px;">
+          <h3 style="margin:0; font-size:.9rem;">🟢 AI connected (shared)</h3>
+          <p style="font-size:.78rem; color:var(--text-muted); margin-top:6px;">This app is using a shared AI connection — you don't need your own key.</p>
+        </div>
+        ` : `
+        <div class="card" style="margin-top:16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <h3 style="margin:0; font-size:.9rem;">${state.aiApiKey ? '🟢 AI connected (Gemini)' : '⚪ AI not connected'}</h3>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-ghost btn-sm" onclick="toggleKeyPanel()">${state.aiApiKey ? 'Change key' : 'Connect AI'}</button>
+              ${state.aiApiKey ? `<button class="btn btn-outline btn-sm" onclick="forgetApiKey()">Forget</button>` : ''}
+            </div>
+          </div>
+          ${state.showKeyPanel ? `
+            <form onsubmit="return saveApiKey(event)" style="margin-top:12px;">
+              <label>Google Gemini API Key</label>
+              <input type="password" name="key" placeholder="AIza..." required>
+              <button class="btn btn-primary btn-block" style="margin-top:10px;" type="submit">Save & Connect</button>
+              <p style="font-size:.72rem; color:var(--text-muted); margin-top:8px;">⚠️ This calls Google's Gemini API directly from your browser (free tier, no card needed). Your key is saved in <strong>this browser only</strong> — no one else using the app on their own device will see or share it, and it's never sent anywhere except Google. On a shared/public computer, tap "Forget" when you're done. For a real deployment where nobody needs their own key, route requests through your own backend instead — see the backend plan doc.</p>
+            </form>
+          ` : (!state.aiApiKey ? `<p style="font-size:.78rem; color:var(--text-muted); margin-top:8px;">This standalone file needs a free API key to answer questions live in your browser. Get one at aistudio.google.com/apikey (no card required), then tap "Connect AI". Each person using the app needs their own key.</p>` : '')}
+        </div>
+        `}
+      </div>
+      <div class="chat-panel">
+        <div class="chat-head" style="justify-content:space-between;"><div style="display:flex;align-items:center;gap:10px;"><span>🎓</span><div><strong>Uni Assist AI</strong><div style="font-size:.72rem;color:#B9CCB9;">${u.department} · ${u.level}</div></div></div><button onclick="exportChat()" title="Export notes" style="background:rgba(255,255,255,.1); border:none; color:#EAF3EA; font-size:.72rem; font-weight:600; padding:7px 12px; border-radius:8px;">⬇ Export</button></div>
+        <div class="chat-messages" id="chatMessages">
+          ${state.chat.length===0 ? `<div class="msg msg-assistant">Hi ${u.name.split(' ')[0]}! I'm ready to help you excel. Import a document or ask me anything about your ${u.department} coursework, then tap a quick action to get started.</div>` :
+            state.chat.map(m=>`<div class="msg msg-${m.role}">${escapeHtml(m.content)}</div>`).join('')}
+          ${state.chatLoading?`<div class="msg-loading">Uni Assist AI is thinking…</div>`:''}
+        </div>
+        <div class="chat-input-row">
+          <textarea id="chatInput" placeholder="Ask Uni Assist AI any question…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitChat();}"></textarea>
+          <button onclick="submitChat()" aria-label="Send">${ICON.send}</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function toggleKeyPanel(){ state.showKeyPanel = !state.showKeyPanel; render(); }
+function saveApiKey(e){
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const key = f.get("key").trim();
+  if(key.length < 30 || /\s/.test(key)){
+    showToast("That key looks too short or has a space in it — try copying it again using the copy icon in AI Studio.");
+    return false;
+  }
+  state.aiApiKey = key;
+  state.showKeyPanel = false;
+  saveApiKeyToStorage(key);
+  showToast("AI connected — saved in this browser only.");
+  render();
+  return false;
+}
+function forgetApiKey(){
+  state.aiApiKey = "";
+  clearApiKeyFromStorage();
+  showToast("API key forgotten on this device.");
+  render();
+}
+function usePrompt(i){
+  const [, , withoutDoc, withDoc] = QUICK_PROMPTS[i];
+  const input = document.getElementById('chatInput');
+  input.value = state.pendingDocument ? withDoc : withoutDoc;
+  input.focus();
+}
+function escapeHtml(s){ const d=document.createElement('div'); d.innerText=s; return d.innerHTML; }
+
+/* ============================= DOCUMENT IMPORT ============================= */
+// Files sent as raw binary (images) still have to fit in the proxy's request —
+// keep that cap tight. PDFs get their TEXT extracted right here in the browser
+// first, so only the (much smaller) text goes over the network — a 50MB
+// text-based lecture PDF might only be a few hundred KB of actual text.
+const MAX_BINARY_DOC_BYTES = 3 * 1024 * 1024;      // images / non-PDF binary files
+const MAX_PDF_SOURCE_BYTES = 100 * 1024 * 1024;    // the PDF itself, before extraction (just needs to fit in the browser's memory)
+const MAX_EXTRACTED_CHARS = 300000;                 // ~120-150 pages of dense text — plenty for lecture notes, keeps the request small
+
+function isTextFile(file){ return file.type === "text/plain" || /\.(txt|md)$/i.test(file.name); }
+function isPdfFile(file){ return file.type === "application/pdf" || /\.pdf$/i.test(file.name); }
+function isSupportedDoc(file){
+  const ok = ["application/pdf","image/png","image/jpeg","image/webp","text/plain"];
+  return ok.includes(file.type) || isTextFile(file) || isPdfFile(file);
+}
+
+async function extractPdfText(file){
+  if(!window['pdfjsLib']) throw new Error("PDF reader didn't load — check your connection and try again.");
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let text = "";
+  const pageCount = pdf.numPages;
+  for(let i=1; i<=pageCount; i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(it => it.str).join(" ") + "\n\n";
+    if(text.length > MAX_EXTRACTED_CHARS) break;
+  }
+  return { text: text.trim(), pageCount };
+}
+
+async function handleDocumentImport(inputEl){
+  const file = inputEl.files[0];
+  if(!file) return;
+  if(!isSupportedDoc(file)){
+    showToast("That file type isn't supported yet — try a PDF, image (PNG/JPG/WEBP), or a .txt/.md file.");
+    inputEl.value = "";
+    return;
+  }
+
+  if(isPdfFile(file)){
+    if(file.size > MAX_PDF_SOURCE_BYTES){
+      showToast(`That PDF is too large to process (max ${(MAX_PDF_SOURCE_BYTES/1024/1024).toFixed(0)}MB).`);
+      inputEl.value = ""; return;
+    }
+    showToast(`Reading "${file.name}"… this can take a moment for big files.`);
+    try{
+      const { text, pageCount } = await extractPdfText(file);
+      if(text.length < 30){
+        showToast(`Couldn't find readable text in "${file.name}" — it looks like a scanned/image-only PDF. Try exporting a single page as an image (PNG/JPG) instead, under 3MB.`);
+        inputEl.value = ""; return;
+      }
+      const truncated = text.length >= MAX_EXTRACTED_CHARS;
+      state.pendingDocument = { name:file.name, kind:"text", text: truncated ? text.slice(0, MAX_EXTRACTED_CHARS) : text };
+      showToast(truncated
+        ? `"${file.name}" imported (${pageCount} pages — using the first part, it was long). Choose what you'd like to do with it.`
+        : `"${file.name}" imported (${pageCount} pages of text). Choose what you'd like to do with it.`);
+      render();
+    }catch(err){
+      showToast(`Couldn't read that PDF (${err.message}). Try a smaller file or a different format.`);
+    }
+    inputEl.value = "";
+    return;
+  }
+
+  if(file.size > MAX_BINARY_DOC_BYTES){
+    showToast(`That file is too large — please use something under ${(MAX_BINARY_DOC_BYTES/1024/1024).toFixed(0)}MB. (PDFs can be much bigger — their text gets extracted instead of sending the whole file.)`);
+    inputEl.value = "";
+    return;
+  }
+  const reader = new FileReader();
+  const textMode = isTextFile(file);
+  reader.onload = () => {
+    if(textMode){
+      state.pendingDocument = { name:file.name, kind:"text", text: reader.result };
+    } else {
+      const base64 = String(reader.result).split(",")[1] || "";
+      state.pendingDocument = { name:file.name, kind:"file", mimeType: file.type || "application/octet-stream", data: base64 };
+    }
+    showToast(`"${file.name}" imported — choose what you'd like to do with it.`);
+    render();
+  };
+  reader.onerror = () => showToast("Couldn't read that file — please try again.");
+  if(textMode){ reader.readAsText(file); } else { reader.readAsDataURL(file); }
+  inputEl.value = "";
+}
+function removePendingDocument(){
+  state.pendingDocument = null;
+  render();
+}
+
+/* ============================= SHARED AI ENDPOINT (optional) ============================= */
+/* If you deploy the small proxy function in uni-assist-ai-proxy.js (see the
+   backend plan doc) and put its URL here, EVERY user of this app shares one
+   key automatically — nobody has to connect their own. Leave blank to keep
+   the current "each person connects their own free Gemini key" behavior. */
+const SHARED_AI_ENDPOINT = "https://uni-assist-proxy.vercel.app/api/ai";
+
+async function callGemini(model, system, contents){
+  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "x-goog-api-key": state.aiApiKey
+    },
+    body: JSON.stringify({
+      system_instruction: { parts:[{ text: system }] },
+      contents
+    })
+  });
+  if(!resp.ok){
+    const errBody = await resp.json().catch(()=>({}));
+    const err = new Error(errBody?.error?.message || `Request failed (${resp.status})`);
+    err.status = resp.status;
+    throw err;
+  }
+  const data = await resp.json();
+  return (data.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("\n").trim();
+}
+
+async function callSharedEndpoint(system, contents){
+  const resp = await fetch(SHARED_AI_ENDPOINT, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ system, contents })
+  });
+  if(resp.status === 413){
+    throw new Error("That document is too large for the shared AI connection to carry (limit ~3MB). Try a smaller file, or a text-only excerpt.");
+  }
+  const data = await resp.json().catch(()=>({}));
+  if(!resp.ok) throw new Error(data.error || `Request failed (${resp.status})`);
+  return (data.text || "").trim();
+}
+
+/* Google's free-tier Flash model occasionally returns a "high demand" / overloaded
+   error at peak times. Retry once with a short delay, then fall back to the
+   lighter Flash-Lite model before giving up. */
+async function askGemini(system, contents){
+  if(SHARED_AI_ENDPOINT){
+    const text = await callSharedEndpoint(system, contents);
+    return text || "Sorry, I couldn't generate a response — please try again.";
+  }
+  const models = ["gemini-flash-latest","gemini-flash-lite-latest"];
+  let lastErr;
+  for(const model of models){
+    for(let attempt=0; attempt<2; attempt++){
+      try{
+        const text = await callGemini(model, system, contents);
+        return text || "Sorry, I couldn't generate a response — please try again.";
+      }catch(err){
+        lastErr = err;
+        const overloaded = /overload|high demand|503/i.test(err.message) || err.status===503;
+        if(overloaded && attempt===0){
+          await new Promise(r=>setTimeout(r, 1300));
+          continue;
+        }
+        break;
+      }
+    }
+  }
+  throw lastErr;
+}
+
+
+async function submitChat(){
+  const input = document.getElementById('chatInput');
+  const notes = document.getElementById('notesArea');
+  let question = input.value.trim();
+  if(!question) return;
+  if(!SHARED_AI_ENDPOINT && !state.aiApiKey){
+    state.showKeyPanel = true;
+    showToast("Connect your API key first — see the panel on the left.");
+    render();
+    return;
+  }
+  let apiContent = question;
+  let displayContent = question;
+  let apiPart = null;
+  const doc = state.pendingDocument;
+  if(notes && notes.value.trim()){
+    apiContent = `Here are my lecture notes:\n\n${notes.value.trim()}\n\n${apiContent}`;
+    displayContent = `📝 (pasted notes)\n${displayContent}`;
+    notes.value = "";
+  }
+  if(doc){
+    if(doc.kind === "text"){
+      apiContent = `Here is the content of "${doc.name}":\n\n${doc.text}\n\n${apiContent}`;
+    } else {
+      apiPart = { inline_data: { mime_type: doc.mimeType, data: doc.data } };
+    }
+    displayContent = `📎 ${doc.name}\n${displayContent}`;
+    state.pendingDocument = null;
+  }
+  input.value = "";
+  const u = currentUser();
+  state.chat.push({role:"user", content:displayContent, apiContent, apiPart});
+  state.chatLoading = true;
+  render();
+  scrollChatBottom();
+  try{
+    const system = `You are the Uni Assist AI Study Assistant, helping a Nigerian university student named ${u.name}, studying ${u.department} (${u.level}) at ${u.university}. Give clear, well-structured, exam-ready study help. Use numbered lists for questions, bold headings for sections, and keep answers focused and practical. When a document is attached, base your answer on its actual content.`;
+    const contents = state.chat.map(m => {
+      const parts = [{ text: m.apiContent !== undefined ? m.apiContent : m.content }];
+      if(m.apiPart) parts.push(m.apiPart);
+      return { role: m.role === "assistant" ? "model" : "user", parts };
+    });
+    const reply = await askGemini(system, contents);
+    state.chat.push({role:"assistant", content:reply});
+  }catch(err){
+    state.chat.push({role:"assistant", content:`I couldn't reach the AI service: ${err.message}. Double-check your API key and try again.`});
+  }
+  state.chatLoading = false;
+  render();
+  scrollChatBottom();
+}
+function scrollChatBottom(){
+  requestAnimationFrame(()=>{
+    const el = document.getElementById('chatMessages');
+    if(el) el.scrollTop = el.scrollHeight;
+  });
+}
+function exportChat(){
+  if(state.chat.length===0){ showToast("Nothing to export yet — ask a question first."); return; }
+  const u = currentUser();
+  const lines = [
+    "UNI ASSIST — AI STUDY NOTES",
+    `Student: ${u.name} · ${u.department} · ${u.level} · ${u.university}`,
+    `Exported: ${new Date().toLocaleString()}`,
+    "".padEnd(40,"—"),
+    ""
+  ];
+  state.chat.forEach(m=>{
+    lines.push(m.role==="user" ? "YOU ASKED:" : "UNI ASSIST AI:");
+    lines.push(m.content);
+    lines.push("");
+  });
+  const blob = new Blob([lines.join("\n")], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `uni-assist-notes-${Date.now()}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("Notes exported to your downloads.");
+}
+
+/* ============================= PAGE: SCHEDULE ============================= */
+function renderReminderCard(r){
+  const cat = REMINDER_CATS[r.category] || REMINDER_CATS["General Reminder"];
+  const dt = new Date(r.datetime);
+  const day = dt.toLocaleDateString('en-US',{weekday:'long'});
+  const date = dt.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const time = dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  return `<div class="rem-card" style="background:${cat.bg};">
+    <div class="rem-day" style="color:${cat.fg};">${day} · ${date}</div>
+    <div class="rem-title">${r.text}</div>
+    <div class="rem-time">${cat.ic} ${time} · ${r.category}</div>
+  </div>`;
+}
+
+function buildMiniCalendar(){
+  const now = new Date();
+  const y=now.getFullYear(), m=now.getMonth();
+  const first = new Date(y,m,1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const daysInPrev = new Date(y,m,0).getDate();
+  let cells=[];
+  for(let i=startDow-1;i>=0;i--) cells.push({d:daysInPrev-i, muted:true});
+  for(let d=1;d<=daysInMonth;d++) cells.push({d, muted:false, today:d===now.getDate()});
+  while(cells.length%7!==0) cells.push({d:cells.length,muted:true});
+  let rows=[];
+  for(let i=0;i<cells.length;i+=7) rows.push(cells.slice(i,i+7));
+  const monthName = now.toLocaleDateString('en-US',{month:'long', year:'numeric'});
+  return `<div style="font-weight:700; font-size:.85rem; margin-top:14px;">${monthName}</div>
+  <table class="mini-cal"><thead><tr>${['S','M','T','W','T','F','S'].map(d=>`<th>${d}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(row=>`<tr>${row.map(c=>`<td class="${c.muted?'muted':''} ${c.today?'today':''}">${c.d}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+
+function pageSchedule(u){
+  const upcoming = [...u.reminders].sort((a,b)=>new Date(a.datetime)-new Date(b.datetime));
+  return `
+    <div class="page-head"><div class="eyebrow">Planner</div><h1>Add Reminder</h1></div>
+    <div class="grid grid-2">
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <h3>What's the reminder?</h3>
+          <form onsubmit="return handleAddReminder(event)">
+            <input type="text" name="text" placeholder="e.g. Study for MKT 201 exam" required>
+            <div class="field-row">
+              <div><label>Date & Time</label><input type="datetime-local" name="datetime" required></div>
+              <div><label>Category</label><select name="category">${Object.keys(REMINDER_CATS).map(c=>`<option>${c}</option>`).join('')}</select></div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:16px;" type="submit">${ICON.plus} Add Reminder</button>
+          </form>
+        </div>
+        <h3 style="margin-bottom:12px;">Your Reminders</h3>
+        ${upcoming.length ? `<div class="rem-grid">${upcoming.map(renderReminderCard).join('')}</div>` :
+          `<div class="empty-state"><span class="big">🗓️</span>No reminders yet. Add your first one above.</div>`}
+      </div>
+      <div class="card">
+        <h3>Calendar</h3>
+        ${buildMiniCalendar()}
+        <div class="cat-legend">
+          ${Object.entries(REMINDER_CATS).map(([name,c])=>`<div class="row"><span class="cat-dot" style="background:${c.dot};"></span>${c.ic} ${name}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+function handleAddReminder(e){
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const u = currentUser();
+  u.reminders.push({id:uid(), text:f.get("text"), datetime:f.get("datetime"), category:f.get("category")});
+  saveData();
+  showToast("Reminder added.");
+  e.target.reset();
+  render();
+  return false;
+}
+
+/* ============================= PAGE: GOAL ============================= */
+function pageGoal(u){
+  return `
+    <div class="page-head"><div class="eyebrow">Planner</div><h1>Goal Tracker</h1></div>
+    <div class="grid grid-2">
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <h3>Add New Goal</h3>
+          <form onsubmit="return handleAddGoal(event)">
+            <label>Goal Title</label><input type="text" name="title" placeholder="e.g. 70+ in MKT 301" required>
+            <div class="field-row">
+              <div><label>Category</label><select name="category">${GOAL_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+              <div><label>Target Date</label><input type="date" name="date"></div>
+            </div>
+            <label>Initial Progress (<span id="progressLabel">0</span>%)</label>
+            <input type="range" min="0" max="100" value="0" name="progress" oninput="document.getElementById('progressLabel').innerText=this.value">
+            <button class="btn btn-primary" style="margin-top:16px;" type="submit">${ICON.plus} Add Goal</button>
+          </form>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Active Goals</h3>
+        ${u.goals.length ? u.goals.map(g=>`
+          <div class="goal-row">
+            <div class="goal-top">
+              <div><div class="goal-name">🏆 ${g.title}</div><div class="goal-cat">${g.category}${g.date?` · due ${g.date}`:''}</div></div>
+              <button class="btn btn-ghost btn-sm" onclick="bumpGoal('${g.id}')">+10%</button>
+            </div>
+            <div class="progress-track"><div class="progress-fill" style="width:${g.progress}%;"></div></div>
+            <div class="range-label"><span>${g.progress}%</span><span>${g.progress>=100?'Complete 🎉':''}</span></div>
+          </div>
+        `).join('') : `<div class="empty-state"><span class="big">🎯</span>No goals yet. Set your first target to start tracking progress.</div>`}
+      </div>
+    </div>
+  `;
+}
+function handleAddGoal(e){
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const u = currentUser();
+  u.goals.push({id:uid(), title:f.get("title"), category:f.get("category"), date:f.get("date"), progress:parseInt(f.get("progress")||"0",10)});
+  saveData();
+  showToast("Goal added.");
+  e.target.reset();
+  render();
+  return false;
+}
+function bumpGoal(id){
+  const u = currentUser();
+  const g = u.goals.find(g=>g.id===id);
+  if(g) g.progress = Math.min(100, g.progress+10);
+  saveData();
+  render();
+}
+
+/* ============================= PAGE: PROFILE (enhanced UX) ============================= */
+function pageProfile(u){
+  const filled = [u.name,u.university,u.department,u.level].filter(Boolean).length;
+  const completeness = Math.round((filled/5)*100); // /5 leaves room for avatar upload
+  return `
+    <div class="page-head"><div class="eyebrow">Account</div><h1>Profile</h1></div>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="profile-head">
+        <div class="avatar-lg">${initialsOf(u.name)}<span class="avatar-badge" title="Change photo" onclick="showToast('Photo upload coming soon.')">${ICON.camera}</span></div>
+        <div>
+          <h2 style="font-size:1.3rem;">${u.name}</h2>
+          <div class="profile-tags">
+            <span class="pill pill-green">🎓 ${u.department}</span>
+            <span class="pill pill-green">📶 ${u.level}</span>
+            <span class="pill pill-outline">🏫 ${u.university}</span>
+          </div>
+        </div>
+      </div>
+      <div class="completeness">
+        <div style="display:flex; justify-content:space-between; font-size:.78rem; color:var(--text-muted);"><span>Profile completeness</span><span>${completeness}%</span></div>
+        <div class="track"><div class="fill" style="width:${completeness}%;"></div></div>
+      </div>
+    </div>
+
+    <div class="grid grid-3" style="margin-bottom:20px;">
+      <div class="card stat-card"><span class="num">${u.materials.length}</span><span class="lbl">Materials Shared</span></div>
+      <div class="card stat-card"><span class="num">${u.reminders.length}</span><span class="lbl">Reminders Set</span></div>
+      <div class="card stat-card"><span class="num">${u.goals.length}</span><span class="lbl">Active Goals</span></div>
+    </div>
+
+    <div class="card">
+      <div class="tabs" style="margin-bottom:20px;">
+        <button class="${state.profileTab==='view'?'active':''}" onclick="setProfileTab('view')">Overview</button>
+        <button class="${state.profileTab==='edit'?'active':''}" onclick="setProfileTab('edit')">Edit Profile</button>
+        <button class="${state.profileTab==='password'?'active':''}" onclick="setProfileTab('password')">Change Password</button>
+      </div>
+      ${state.profileTab==='view'?renderProfileOverview(u):''}
+      ${state.profileTab==='edit'?renderProfileEdit(u):''}
+      ${state.profileTab==='password'?renderProfilePassword(u):''}
+    </div>
+  `;
+}
+function setProfileTab(tab){ state.profileTab=tab; render(); }
+function renderProfileOverview(u){
+  return `
+    <div class="grid grid-2">
+      <div>
+        <label>Full Name</label><p style="padding:11px 13px; background:#F6F7F4; border-radius:10px;">${u.name}</p>
+        <label>Email Address</label><p style="padding:11px 13px; background:#F6F7F4; border-radius:10px;">${u.email}</p>
+      </div>
+      <div>
+        <label>University</label><p style="padding:11px 13px; background:#F6F7F4; border-radius:10px;">${u.university}</p>
+        <label>Department / Level</label><p style="padding:11px 13px; background:#F6F7F4; border-radius:10px;">${u.department} · ${u.level}</p>
+      </div>
+    </div>
+    <button class="btn btn-outline" style="margin-top:16px;" onclick="setProfileTab('edit')">${ICON.edit} Edit these details</button>
+  `;
+}
+function renderProfileEdit(u){
+  return `
+  <form onsubmit="return handleEditProfile(event)">
+    <div class="field-row">
+      <div><label>Full Name</label><input type="text" name="name" value="${u.name}" required></div>
+      <div><label>University</label>${comboField("university", UNIVERSITIES, "Type or pick your University", u.university)}</div>
+    </div>
+    <div class="field-row">
+      <div><label>Department</label>${comboField("department", DEPARTMENTS, "Type or pick your Department", u.department)}</div>
+      <div><label>Level</label><select name="level">${LEVELS.map(x=>`<option ${x===u.level?'selected':''}>${x}</option>`).join('')}</select></div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:16px;" type="submit">${ICON.check} Save Changes</button>
+  </form>`;
+}
+function handleEditProfile(e){
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const u = currentUser();
+  u.name=f.get("name"); u.university=f.get("university"); u.department=f.get("department"); u.level=f.get("level");
+  saveData();
+  showToast("Profile updated.");
+  state.profileTab="view";
+  render();
+  return false;
+}
+function renderProfilePassword(u){
+  return `
+  <form onsubmit="return handleChangePassword(event)">
+    <label>Old Password</label>${passwordField("old","",  "required")}
+    <label>New Password</label>${passwordField("new1","", "required minlength=\"6\"")}
+    <label>Confirm New Password</label>${passwordField("new2","", "required minlength=\"6\"")}
+    <button class="btn btn-primary" style="margin-top:16px;" type="submit">${ICON.lock} Update Password</button>
+  </form>`;
+}
+function handleChangePassword(e){
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const u = currentUser();
+  if(f.get("old")!==u.password){ showToast("Old password is incorrect."); return false; }
+  if(f.get("new1")!==f.get("new2")){ showToast("New passwords don't match."); return false; }
+  u.password=f.get("new1");
+  saveData();
+  showToast("Password updated.");
+  state.profileTab="view";
+  render();
+  return false;
+}
+
+/* ============================= AUTH RENDER ============================= */
+function renderAuth(){
+  return `
+  <div class="app-frame">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo"><span class="cap">🎓</span><h2>Uni Assist</h2></div>
+      <p class="auth-tagline">Nigeria's academic resource center for university students — study smarter, not harder.</p>
+      <div class="auth-tabs">
+        <button class="${state.authMode==='signin'?'active':''}" onclick="setAuthMode('signin')">Sign In</button>
+        <button class="${state.authMode==='signup'?'active':''}" onclick="setAuthMode('signup')">Create Account</button>
+      </div>
+      ${state.authError?`<div class="auth-error">${state.authError}</div>`:''}
+      ${state.authMode==='signin'?renderSignIn():renderSignUp()}
+      ${state.authMode==='signin'?`<div class="auth-demo">or <button onclick="useDemoAccount()">use the demo account</button> to explore instantly</div>`:''}
+    </div>
+  </div>
+  </div>`;
+}
+function setAuthMode(m){ state.authMode=m; state.authError=""; render(); }
+function renderSignIn(){
+  return `<form onsubmit="return handleSignIn(event)">
+    <label>Email Address</label><input type="email" name="email" placeholder="e.g. you@university.edu.ng" required>
+    <label>Password</label>${passwordField("password","••••••","required")}
+    <button class="btn btn-primary btn-block" style="margin-top:18px;" type="submit">Sign In</button>
+  </form>`;
+}
+function renderSignUp(){
+  return `<form onsubmit="return handleSignUp(event)">
+    <label>Full Name</label><input type="text" name="name" placeholder="e.g. Chukwuemeka Obi" required>
+    <label>Email Address</label><input type="email" name="email" placeholder="e.g. you@university.edu.ng" required>
+    <label>Password</label>${passwordField("password","Create a strong password","required minlength=\"6\"")}
+    <label>University</label>${comboField("university", UNIVERSITIES, "Type or pick your University")}
+    <label>Department</label>${comboField("department", DEPARTMENTS, "Type or pick your Department")}
+    <label>Level</label><select name="level" required><option value="" disabled selected>Select your Level</option>${LEVELS.map(l=>`<option>${l}</option>`).join('')}</select>
+    <button class="btn btn-primary btn-block" style="margin-top:18px;" type="submit">Create Account</button>
+  </form>`;
+}
+
+/* ============================= ROOT RENDER ============================= */
+function render(){
+  const root = document.getElementById('root');
+  root.innerHTML = state.view==='auth' ? renderAuth() : renderApp();
+}
+render();
+</script>
+</body>
+</html>
